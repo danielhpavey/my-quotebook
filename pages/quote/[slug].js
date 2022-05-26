@@ -1,7 +1,11 @@
 import getPosts from '../../lib/getPosts';
 import Head from 'next/head'
+import {
+      TwitterShareButton,
+      TwitterIcon,
+} from 'next-share'
 
-export default function PostPage({slug, quote}) {
+export default function PostPage({slug, quote, url}) {
   return (
     <div className='prose mx-auto text-5xl leading-relaxed max-w-lg'>
           <Head>
@@ -14,6 +18,12 @@ export default function PostPage({slug, quote}) {
             &mdash; {quote.fields.author} <cite></cite>
           </figcaption>
         </figure>
+      <TwitterShareButton
+          url={url}
+          title={quote.fields.quote + ' ~ ' + quote.fields.author}
+        >
+          <TwitterIcon size={42} round />
+    </TwitterShareButton>
       </div>
   );
 }
@@ -38,9 +48,11 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params: { slug }}) {
     const posts = await getPosts();
     const post = posts.find(p => p.slug == slug)
+    const url = process.env.HOST + '/quote/' + slug
     return {
         props: {   
-            quote: post
+            quote: post,
+            url: url 
         }
     }
 }

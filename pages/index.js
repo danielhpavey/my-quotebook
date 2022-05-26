@@ -16,7 +16,7 @@ export default function Home({posts}) {
       </header>
       <main className="text-xl">
           {posts.map(post => (
-                <Link href={`/quote/${post.slug}`} key={post.slug}><a className="block hover:bg-blue-500 transition hover:text-white p-3 duration-500">
+                <Link href={`/quote/${post.slug}`} key={post.slug}><a className="block hover:bg-blue-500 transition hover:text-white p-4 duration-500 rounded">
               <figure className="quote mb-8">
               <blockquote>{post.fields.quote}</blockquote>
               <figcaption>
