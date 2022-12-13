@@ -1,9 +1,5 @@
 import getPosts from '../../lib/getPosts';
 import Head from 'next/head'
-import {
-      TwitterShareButton,
-      TwitterIcon,
-} from 'next-share'
 
 export default function PostPage({slug, quote, url}) {
   return (
@@ -18,12 +14,6 @@ export default function PostPage({slug, quote, url}) {
             &mdash; {quote.fields.author} <cite></cite>
           </figcaption>
         </figure>
-      <TwitterShareButton
-          url={url}
-          title={quote.fields.quote + ' ~ ' + quote.fields.author}
-        >
-          <TwitterIcon size={42} round />
-    </TwitterShareButton>
       </div>
   );
 }
