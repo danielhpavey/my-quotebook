@@ -1,0 +1,83 @@
+---
+import {
+  faXTwitter,
+  faFacebook,
+  faLinkedin,
+  faBluesky,
+  faThreads,
+  faWhatsapp,
+} from '@fortawesome/free-brands-svg-icons';
+import { faEnvelope, faLink, faCheck } from '@fortawesome/free-solid-svg-icons';
+import Icon from './Icon.astro';
+import { SITE_NAME, truncate } from '../lib/seo';
+
+const { url, quote, author } = Astro.props;
+
+// keep the text short enough for X's 280 character limit once the link is added
+const text = `“${truncate(quote, 200)}”${author ? ` – ${author}` : ''}`;
+const withUrl = `${text} ${url}`;
+const e = encodeURIComponent;
+
+const networks = [
+  { name: 'X', icon: faXTwitter, href: `https://x.com/intent/post?text=${e(text)}&url=${e(url)}` },
+  { name: 'Facebook', icon: faFacebook, href: `https://www.facebook.com/sharer/sharer.php?u=${e(url)}` },
+  { name: 'LinkedIn', icon: faLinkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${e(url)}` },
+  { name: 'Bluesky', icon: faBluesky, href: `https://bsky.app/intent/compose?text=${e(withUrl)}` },
+  { name: 'Threads', icon: faThreads, href: `https://www.threads.com/intent/post?text=${e(withUrl)}` },
+  { name: 'WhatsApp', icon: faWhatsapp, href: `https://wa.me/?text=${e(withUrl)}` },
+];
+
+const email = `mailto:?subject=${e(`A quote from ${SITE_NAME}`)}&body=${e(`${text}\n\n${url}`)}`;
+const buttonClass = 'flex items-center justify-center w-11 h-11 rounded-full border border-gray-200 text-gray-600 hover:bg-blue-500 hover:border-blue-500 hover:text-white transition duration-500';
+---
+
+<aside aria-labelledby="share-heading" class="mt-16 border-t border-gray-200 pt-8">
+  <h2 id="share-heading" class="text-base font-semibold text-gray-500 mb-4 text-center">Share this quote</h2>
+  <ul class="flex flex-wrap justify-center gap-3">
+    {networks.map(({ name, icon, href }) => (
+      <li>
+        <a href={href} target="_blank" rel="noopener noreferrer" class={buttonClass} aria-label={`Share on ${name}`} title={`Share on ${name}`}>
+          <Icon icon={icon} />
+        </a>
+      </li>
+    ))}
+    <li>
+      <a href={email} class={buttonClass} aria-label="Share by email" title="Share by email">
+        <Icon icon={faEnvelope} />
+      </a>
+    </li>
+    <li>
+      <button type="button" class={buttonClass} data-copy-link={url} aria-label="Copy link" title="Copy link">
+        <span data-icon="link"><Icon icon={faLink} /></span>
+        <span data-icon="check" hidden><Icon icon={faCheck} /></span>
+      </button>
+    </li>
+  </ul>
+  <p class="sr-only" role="status" data-copy-status></p>
+</aside>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach(button => {
+    const linkIcon = button.querySelector<HTMLElement>('[data-icon="link"]')!;
+    const checkIcon = button.querySelector<HTMLElement>('[data-icon="check"]')!;
+    const status = button.closest('aside')?.querySelector('[data-copy-status]');
+
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copyLink!);
+      } catch {
+        // clipboard can be blocked (e.g. non-HTTPS); fall back to a prompt to copy manually
+        window.prompt('Copy this link:', button.dataset.copyLink);
+        return;
+      }
+      linkIcon.hidden = true;
+      checkIcon.hidden = false;
+      if (status) status.textContent = 'Link copied';
+      setTimeout(() => {
+        linkIcon.hidden = false;
+        checkIcon.hidden = true;
+        if (status) status.textContent = '';
+      }, 2000);
+    });
+  });
+</script>

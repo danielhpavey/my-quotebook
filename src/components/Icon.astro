@@ -1,0 +1,9 @@
+---
+// renders a Font Awesome icon definition as an inline SVG at build time
+const { icon, class: className = 'w-5 h-5' } = Astro.props;
+const [width, height, , , path] = icon.icon;
+---
+
+<svg class={className} viewBox={`0 0 ${width} ${height}`} fill="currentColor" aria-hidden="true" focusable="false">
+  {[path].flat().map(d => <path d={d} />)}
+</svg>

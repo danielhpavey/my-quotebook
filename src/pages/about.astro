@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { SITE_NAME } from '../lib/seo';
+
+// TODO: placeholder copy – replace with the real about text
+const description = `About ${SITE_NAME}: why it exists and how the quotes are chosen.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: `About ${SITE_NAME}`,
+  description,
+  ...(Astro.site && { url: new URL(Astro.url.pathname, Astro.site).href }),
+};
+---
+
+<Layout title={`About | ${SITE_NAME}`} description={description} jsonLd={jsonLd}>
+  <article class="mx-auto max-w-prose">
+    <header class="h-42">
+      <div class="w-full">
+        <h1 class="block text-6xl md:text-8xl font-display mb-8">About</h1>
+      </div>
+    </header>
+
+    <div class="text-xl leading-relaxed space-y-6">
+      <p>
+        {SITE_NAME} is a small collection of quotes worth remembering – lines from books,
+        speeches, films and conversations that stuck long after they were first heard.
+      </p>
+      <p>
+        It started as a notebook of scribbled sayings and grew into this site so the
+        quotes could be browsed, searched by author and shared with friends.
+      </p>
+
+      <h2 class="text-3xl font-semibold pt-4">How quotes are chosen</h2>
+      <p>
+        There's no strict rule. A quote makes it in if it's funny, wise, surprising or
+        simply well put. Each one is attributed as accurately as possible, but if you spot
+        a misattribution, please get in touch.
+      </p>
+
+      <h2 class="text-3xl font-semibold pt-4">Get in touch</h2>
+      <p>
+        Got a favourite quote that belongs here, or a correction?
+        Send it over at <a href="mailto:hello@example.com" class="text-blue-500 hover:underline">hello@example.com</a>.
+      </p>
+
+      <p class="pt-4">
+        <a href="/" class="text-blue-500 hover:underline">Browse all quotes &rarr;</a>
+      </p>
+    </div>
+  </article>
+</Layout>

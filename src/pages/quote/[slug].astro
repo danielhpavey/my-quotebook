@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import getPosts from '../../lib/getPosts';
+import { SITE_NAME, truncate } from '../../lib/seo';
+import { canRenderQuote } from '../../lib/ogImage';
+import ShareLinks from '../../components/ShareLinks.astro';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map(post => ({
+    params: { slug: post.slug.toString() },
+    props: { quote: post },
+  }));
+}
+
+const { quote } = Astro.props;
+const { author, quote: text } = quote.fields;
+
+const title = `“${truncate(text, 60)}”${author ? ` – ${author}` : ''} | ${SITE_NAME}`;
+const description = truncate(`“${text}”${author ? ` – ${author}` : ''}`);
+
+const hasImage = canRenderQuote(quote.fields);
+// sharing needs the full public URL, so it's only available when `site` is set
+const pageUrl = Astro.site && new URL(Astro.url.pathname, Astro.site).href;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Quotation',
+  text,
+  ...(author && {
+    creator: {
+      '@type': 'Person',
+      name: author,
+      ...(Astro.site && quote.authorSlug && { url: new URL(`/author/${quote.authorSlug}/`, Astro.site).href }),
+    },
+  }),
+  ...(pageUrl && { url: pageUrl }),
+};
+---
+
+<Layout
+  title={title}
+  description={description}
+  type="article"
+  jsonLd={jsonLd}
+  image={hasImage ? `/og/${quote.slug}.png` : undefined}
+  imageAlt={hasImage ? description : undefined}
+>
+  <div class="prose mx-auto text-3xl leading-relaxed max-w-lg">
+    <h1 class="sr-only">{author ? `Quote by ${author}` : 'Quote'}</h1>
+    <figure class="quote">
+      <blockquote>&ldquo;{quote.fields.quote}&rdquo;</blockquote>
+      <figcaption class="text-2xl text-right mt-8">
+        &mdash; {quote.authorSlug
+          ? <a href={`/author/${quote.authorSlug}`} class="hover:text-blue-500 transition duration-500">{quote.fields.author}</a>
+          : quote.fields.author} <cite></cite>
+      </figcaption>
+    </figure>
+  </div>
+  {pageUrl && (
+    <div class="mx-auto max-w-lg">
+      <ShareLinks url={pageUrl} quote={text} author={author} />
+    </div>
+  )}
+</Layout>

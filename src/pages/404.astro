@@ -1,0 +1,9 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { SITE_NAME } from '../lib/seo';
+---
+
+<Layout title={`Page not found | ${SITE_NAME}`} description="This page doesn't exist." noindex>
+  <h1 class="text-6xl md:text-8xl font-display mb-8">Page not found</h1>
+  <p class="text-xl">Sorry, that page doesn't exist. <a href="/" class="text-blue-500 hover:underline">Browse all quotes</a>.</p>
+</Layout>

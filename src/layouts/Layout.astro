@@ -1,0 +1,100 @@
+---
+import '../styles/global.css';
+import { SITE_NAME, SITE_DESCRIPTION } from '../lib/seo';
+import { OG_WIDTH, OG_HEIGHT } from '../lib/ogImage';
+
+const {
+  title = SITE_NAME,
+  description = SITE_DESCRIPTION,
+  type = 'website',
+  jsonLd,
+  noindex = false,
+  image = '/og-image.png',
+  imageAlt = SITE_NAME,
+} = Astro.props;
+
+const canonical = Astro.site && !noindex ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+];
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isCurrent = href => (href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`));
+
+// social sites need an absolute image URL, so this needs `site` too
+const imageUrl = Astro.site ? new URL(image, Astro.site).href : undefined;
+// stop quote text breaking out of the <script> tag
+const structuredData = jsonLd && JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+---
+
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="icon" href="/favicon.ico" />
+    {Astro.site && <link rel="sitemap" href="/sitemap-index.xml" />}
+
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:locale" content="en_GB" />
+    {imageUrl && (
+      <>
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content={String(OG_WIDTH)} />
+        <meta property="og:image:height" content={String(OG_HEIGHT)} />
+        <meta property="og:image:alt" content={imageAlt} />
+        <meta name="twitter:image" content={imageUrl} />
+        <meta name="twitter:image:alt" content={imageAlt} />
+      </>
+    )}
+    <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    {structuredData && <script type="application/ld+json" set:html={structuredData} />}
+  </head>
+  <body class="bg-white">
+    <div class="flex flex-col min-h-screen font-sans text-gray-700">
+      <header class="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur shadow-sm">
+        <nav aria-label="Main" class="container mx-auto max-w-screen-xl flex items-center justify-between gap-4 px-8 py-3">
+          <a href="/" class="text-2xl font-semibold text-blue-500 hover:text-blue-600 transition">{SITE_NAME}</a>
+          <ul class="flex items-center gap-2 text-lg font-medium">
+            {navLinks.map(({ href, label }) => {
+              const current = isCurrent(href);
+              return (
+                <li>
+                  <a
+                    href={href}
+                    aria-current={current ? 'page' : undefined}
+                    class:list={[
+                      'block rounded-full px-4 py-2 transition duration-300',
+                      current
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-800 hover:bg-blue-50 hover:text-blue-600',
+                    ]}
+                  >{label}</a>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </header>
+      <div class="flex flex-col flex-1 p-4">
+        <main class="container mx-auto flex-1 p-4 max-w-screen-xl">
+          <slot />
+        </main>
+        <footer class="mt-8 py-4 bg-tree bg-no-repeat h-72 flip">
+          <div class="container mx-auto flex justify-center"></div>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import getPosts from '../../lib/getPosts';
+import { SITE_NAME, truncate } from '../../lib/seo';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const authors = new Map();
+  posts.forEach(post => {
+    if (!post.authorSlug) return;
+    if (!authors.has(post.authorSlug)) {
+      authors.set(post.authorSlug, { name: post.fields.author, quotes: [] });
+    }
+    authors.get(post.authorSlug).quotes.push(post);
+  });
+  return [...authors].map(([slug, author]) => ({
+    params: { author: slug },
+    props: author,
+  }));
+}
+
+const { name, quotes } = Astro.props;
+
+const count = quotes.length === 1 ? '1 quote' : `${quotes.length} quotes`;
+const description = truncate(`${count} by ${name}, including “${quotes[0].fields.quote}”`);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Quotes by ${name}`,
+  about: { '@type': 'Person', name },
+  hasPart: quotes.map(post => ({
+    '@type': 'Quotation',
+    text: post.fields.quote,
+    creator: { '@type': 'Person', name },
+    ...(Astro.site && { url: new URL(`/quote/${post.slug}/`, Astro.site).href }),
+  })),
+};
+---
+
+<Layout title={`Quotes by ${name} | ${SITE_NAME}`} description={description} jsonLd={jsonLd}>
+  <header class="h-42">
+    <div class="w-full">
+      <h1 class="block text-6xl md:text-8xl font-display mb-8">{name}</h1>
+    </div>
+  </header>
+  <section aria-label="Quotes" class="text-xl">
+    {quotes.map(post => (
+      <a href={`/quote/${post.slug}`} class="block hover:bg-blue-500 transition hover:text-white p-4 duration-500 rounded">
+        <figure class="quote mb-8">
+          <blockquote>&ldquo;{post.fields.quote}&rdquo;</blockquote>
+        </figure>
+      </a>
+    ))}
+  </section>
+</Layout>
