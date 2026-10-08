@@ -2,8 +2,17 @@
 import Layout from '../layouts/Layout.astro';
 import getPosts from '../lib/getPosts';
 import { SITE_NAME, SITE_DESCRIPTION } from '../lib/seo';
+import { normalize } from '../lib/search';
 
 const posts = await getPosts();
+
+// one entry per author, so a search for a name can link to their page
+const authors = [...posts.reduce((map, post) => {
+  if (!post.authorSlug) return map;
+  const author = map.get(post.authorSlug) ?? { slug: post.authorSlug, name: post.fields.author, count: 0 };
+  author.count++;
+  return map.set(post.authorSlug, author);
+}, new Map()).values()].sort((a, b) => a.name.localeCompare(b.name));
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -20,9 +29,40 @@ const jsonLd = {
       <h1 class="block text-6xl md:text-8xl font-display mb-8">Quotebook</h1>
     </div>
   </header>
+
+  <form role="search" action="/" class="mb-8 max-w-xl" data-search-form>
+    <label for="search" class="sr-only">Search quotes and authors</label>
+    <div class="relative">
+      <svg class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.45 4.39l3.08 3.08a.75.75 0 1 1-1.06 1.06l-3.08-3.08A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
+      </svg>
+      <input
+        id="search"
+        type="search"
+        name="q"
+        placeholder="Search quotes or authors…"
+        autocomplete="off"
+        class="w-full rounded-full border border-gray-300 bg-white py-3 pl-12 pr-4 text-lg shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        data-search-input
+      />
+    </div>
+  </form>
+
+  <p role="status" aria-live="polite" class="mb-4 text-gray-500 empty:hidden" data-search-status></p>
+
+  <ul aria-label="Matching authors" class="mb-8 flex flex-wrap gap-2" hidden data-author-results>
+    {authors.map(author => (
+      <li hidden data-search={normalize(author.name)}>
+        <a href={`/author/${author.slug}`} class="block rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-500 hover:border-blue-500 hover:text-white transition duration-300">
+          {author.name} <span class="text-sm opacity-75">· {author.count === 1 ? '1 quote' : `${author.count} quotes`}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
   <section aria-label="Quotes" class="text-xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {posts.map(post => (
-      <a href={`/quote/${post.slug}`} class="block bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-blue-500 hover:border-blue-500 transition hover:text-white p-6 duration-500 rounded-lg">
+      <a href={`/quote/${post.slug}`} data-search={normalize(`${post.fields.quote} ${post.fields.author ?? ''}`)} class="block bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-blue-500 hover:border-blue-500 transition hover:text-white p-6 duration-500 rounded-lg">
         <figure class="quote flex flex-col h-full">
           <blockquote class="flex-1">&ldquo;{post.fields.quote}&rdquo;</blockquote>
           <figcaption class="mt-4 text-base text-right">
@@ -33,3 +73,60 @@ const jsonLd = {
     ))}
   </section>
 </Layout>
+
+<script>
+  import { normalize, matches } from '../lib/search';
+
+  const form = document.querySelector<HTMLFormElement>('[data-search-form]')!;
+  const input = document.querySelector<HTMLInputElement>('[data-search-input]')!;
+  const status = document.querySelector<HTMLElement>('[data-search-status]')!;
+  const authorList = document.querySelector<HTMLElement>('[data-author-results]')!;
+  const authors = [...authorList.querySelectorAll<HTMLElement>('[data-search]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('section [data-search]')];
+  const MAX_AUTHORS = 5;
+
+  const search = (query: string) => {
+    const terms = normalize(query).split(' ').filter(Boolean);
+    const active = terms.length > 0;
+
+    let shown = 0;
+    for (const card of cards) {
+      const visible = !active || matches(card.dataset.search!, terms);
+      card.hidden = !visible;
+      if (visible) shown++;
+    }
+
+    let authorsShown = 0;
+    for (const author of authors) {
+      const visible = active && authorsShown < MAX_AUTHORS && matches(author.dataset.search!, terms);
+      author.hidden = !visible;
+      if (visible) authorsShown++;
+    }
+    authorList.hidden = authorsShown === 0;
+
+    status.textContent = !active
+      ? ''
+      : shown === 0
+        ? `No quotes match “${query.trim()}”.`
+        : `${shown} ${shown === 1 ? 'quote matches' : 'quotes match'} “${query.trim()}”.`;
+
+    // keep the search in the address bar so it can be bookmarked or shared
+    const url = new URL(location.href);
+    if (active) url.searchParams.set('q', query.trim());
+    else url.searchParams.delete('q');
+    history.replaceState(null, '', url);
+  };
+
+  input.addEventListener('input', () => search(input.value));
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    search(input.value);
+  });
+
+  // run a search passed in the URL, e.g. /?q=wilde
+  const initial = new URLSearchParams(location.search).get('q');
+  if (initial) {
+    input.value = initial;
+    search(initial);
+  }
+</script>
