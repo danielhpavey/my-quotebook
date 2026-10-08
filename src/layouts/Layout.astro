@@ -16,10 +16,10 @@ const {
 const canonical = Astro.site && !noindex ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
+  { href: '/about/', label: 'About' },
 ];
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
-const isCurrent = href => (href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`));
+const path = Astro.url.pathname;
+const isCurrent = href => (href === '/' ? path === '/' : path.startsWith(href));
 
 // social sites need an absolute image URL, so this needs `site` too
 const imageUrl = Astro.site ? new URL(image, Astro.site).href : undefined;

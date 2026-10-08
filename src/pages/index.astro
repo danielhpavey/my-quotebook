@@ -53,7 +53,7 @@ const jsonLd = {
   <ul aria-label="Matching authors" class="mb-8 flex flex-wrap gap-2" hidden data-author-results>
     {authors.map(author => (
       <li hidden data-search={normalize(author.name)}>
-        <a href={`/author/${author.slug}`} class="block rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-500 hover:border-blue-500 hover:text-white transition duration-300">
+        <a href={`/author/${author.slug}/`} class="block rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-500 hover:border-blue-500 hover:text-white transition duration-300">
           {author.name} <span class="text-sm opacity-75">· {author.count === 1 ? '1 quote' : `${author.count} quotes`}</span>
         </a>
       </li>
@@ -62,7 +62,7 @@ const jsonLd = {
 
   <section aria-label="Quotes" class="text-xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {posts.map(post => (
-      <a href={`/quote/${post.slug}`} data-search={normalize(`${post.fields.quote} ${post.fields.author ?? ''}`)} class="block bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-blue-500 hover:border-blue-500 transition hover:text-white p-6 duration-500 rounded-lg">
+      <a href={`/quote/${post.slug}/`} data-search={normalize(`${post.fields.quote} ${post.fields.author ?? ''}`)} class="block bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-blue-500 hover:border-blue-500 transition hover:text-white p-6 duration-500 rounded-lg">
         <figure class="quote flex flex-col h-full">
           <blockquote class="flex-1">&ldquo;{post.fields.quote}&rdquo;</blockquote>
           <figcaption class="mt-4 text-base text-right">

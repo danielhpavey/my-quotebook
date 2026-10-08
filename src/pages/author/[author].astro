@@ -46,7 +46,7 @@ const jsonLd = {
   </header>
   <section aria-label="Quotes" class="text-xl">
     {quotes.map(post => (
-      <a href={`/quote/${post.slug}`} class="block hover:bg-blue-500 transition hover:text-white p-4 duration-500 rounded">
+      <a href={`/quote/${post.slug}/`} class="block hover:bg-blue-500 transition hover:text-white p-4 duration-500 rounded">
         <figure class="quote mb-8">
           <blockquote>&ldquo;{post.fields.quote}&rdquo;</blockquote>
         </figure>

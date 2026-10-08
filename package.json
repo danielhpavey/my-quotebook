@@ -21,5 +21,8 @@
     "astro": "^7.3.7",
     "satori": "^0.42.0",
     "tailwindcss": "^4.3.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

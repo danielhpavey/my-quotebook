@@ -9,6 +9,9 @@ const { HOST } = loadEnv(process.env.NODE_ENV ?? '', process.cwd(), '');
 
 export default defineConfig({
   site: HOST,
+  // Cloudflare serves pages from folder/index.html at /folder/ and redirects
+  // /folder there, so always link with the slash to avoid the extra redirect
+  trailingSlash: 'always',
   integrations: [sitemap()],
   vite: {
     plugins: [tailwindcss()],

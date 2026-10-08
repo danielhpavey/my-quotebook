@@ -1,0 +1,13 @@
+// Cloudflare Workers config: serves the static Astro build from ./dist.
+// (Cloudflare Pages projects ignore this file and use the dashboard settings.)
+{
+  "name": "quotebook",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // serve dist/404.html with a 404 status for unknown URLs
+    "not_found_handling": "404-page",
+    // /about -> /about/ to match the trailing-slash URLs Astro builds
+    "html_handling": "auto-trailing-slash"
+  }
+}
