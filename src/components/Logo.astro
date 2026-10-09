@@ -1,0 +1,13 @@
+---
+// the Quotebook bookmark mark, optionally with the wordmark beside it.
+// The same artwork is used for public/favicon.svg, favicon.ico and apple-touch-icon.png.
+const { wordmark = true, class: className = '' } = Astro.props;
+---
+
+<span class:list={['inline-flex items-center gap-2', className]}>
+  <svg class="h-9 w-9 shrink-0" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <path fill="#3b82f6" d="M13 2h38a5 5 0 0 1 5 5v55L32 47 8 62V7a5 5 0 0 1 5-5z" />
+    <path fill="#fff" d="M26.17 12.50L28.69 14.31Q28.05 15.16 27.14 16.87Q26.23 18.59 25.58 20.63Q24.94 22.67 25 24.55Q25.45 24.42 25.75 24.39Q26.04 24.36 26.36 24.36Q28.11 24.36 29.47 25.36Q30.83 26.37 30.83 28.64Q30.83 30.58 29.57 32.04Q28.31 33.50 26.17 33.50Q23.19 33.56 21.70 31.59Q20.20 29.61 20.20 26.69Q20.20 24.62 20.85 22.29Q21.50 19.95 22.83 17.46Q24.16 14.96 26.17 12.50M39.13 12.50L41.66 14.31Q41.01 15.16 40.10 16.87Q39.19 18.59 38.55 20.63Q37.90 22.67 37.96 24.55Q38.42 24.42 38.71 24.39Q39 24.36 39.32 24.36Q41.07 24.36 42.43 25.36Q43.80 26.37 43.80 28.64Q43.80 30.58 42.53 32.04Q41.27 33.50 39.13 33.50Q36.15 33.56 34.66 31.59Q33.17 29.61 33.17 26.69Q33.17 24.62 33.81 22.29Q34.46 19.95 35.79 17.46Q37.12 14.96 39.13 12.50" />
+  </svg>
+  {wordmark && <span class="font-serif text-2xl font-semibold tracking-tight text-gray-700">Quotebook</span>}
+</span>
