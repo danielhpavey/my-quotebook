@@ -21,6 +21,7 @@ export async function getStaticPaths() {
 }
 
 const { name, quotes } = Astro.props;
+const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name)}`;
 
 const count = quotes.length === 1 ? '1 quote' : `${quotes.length} quotes`;
 const description = truncate(`${count} by ${name}, including “${quotes[0].fields.quote}”`);
@@ -48,4 +49,10 @@ const jsonLd = {
   <section aria-label="Quotes" class="text-xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {quotes.map(post => <QuoteCard post={post} />)}
   </section>
+
+  <p class="mt-12 text-lg">
+    <a href={searchUrl} target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">
+      Find out more about {name} &rarr;<span class="sr-only"> (Google search, opens in a new tab)</span>
+    </a>
+  </p>
 </Layout>
