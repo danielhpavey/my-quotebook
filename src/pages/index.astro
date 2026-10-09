@@ -3,9 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import getPosts from '../lib/getPosts';
 import { SITE_NAME, SITE_DESCRIPTION } from '../lib/seo';
 import { normalize } from '../lib/search';
+import { quoteOfTheDay } from '../lib/quoteOfTheDay';
 import QuoteCard from '../components/QuoteCard.astro';
 
 const posts = await getPosts();
+
+// chosen when the site is built; the scheduled rebuilds pick up the new day's quote
+const today = new Date();
+const featured = quoteOfTheDay(posts, today);
+const todayLabel = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 
 // one entry per author, so a search for a name can link to their page
 const authors = [...posts.reduce((map, post) => {
@@ -30,6 +36,28 @@ const jsonLd = {
       <h1 class="block text-6xl md:text-8xl font-display mb-8">Quotebook</h1>
     </div>
   </header>
+
+  {featured && (
+    <section aria-labelledby="qotd-heading" class="mb-12 rounded-2xl bg-blue-500 text-white shadow-lg p-8 md:p-12">
+      <h2 id="qotd-heading" class="flex flex-wrap items-baseline gap-x-3 text-sm font-semibold uppercase tracking-widest text-blue-100">
+        Quote of the day
+        <time datetime={today.toISOString().slice(0, 10)} class="font-normal normal-case tracking-normal">{todayLabel}</time>
+      </h2>
+      <figure class="mt-6">
+        <blockquote class="text-3xl md:text-5xl leading-tight font-medium">&ldquo;{featured.fields.quote}&rdquo;</blockquote>
+        {featured.fields.author && (
+          <figcaption class="mt-6 text-xl md:text-2xl text-blue-50">
+            &mdash; {featured.authorSlug
+              ? <a href={`/author/${featured.authorSlug}/`} class="underline decoration-blue-300 underline-offset-4 hover:decoration-white">{featured.fields.author}</a>
+              : featured.fields.author}
+          </figcaption>
+        )}
+      </figure>
+      <a href={`/quote/${featured.slug}/`} class="mt-8 inline-block rounded-full bg-white px-5 py-2 font-semibold text-blue-600 hover:bg-blue-50 transition">
+        View &amp; share &rarr;
+      </a>
+    </section>
+  )}
 
   <form role="search" action="/" class="mb-8 max-w-xl" data-search-form>
     <label for="search" class="sr-only">Search quotes and authors</label>
