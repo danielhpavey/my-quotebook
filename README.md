@@ -29,7 +29,16 @@ new or edited quotes appear after the next deploy.
 
 ### Workers (recommended for new projects)
 
-`wrangler.jsonc` serves `./dist` as static assets. In the Cloudflare dashboard,
+`wrangler.jsonc` serves `./dist` as static assets. A small Worker
+(`worker/index.js`) also calls a deploy hook every 6 hours so new quotes in
+Airtable are picked up automatically. Set the hook URL as a secret (not in the
+repo):
+
+```bash
+npx wrangler secret put DEPLOY_HOOK_URL
+```
+
+In the Cloudflare dashboard,
 connect the repo under **Workers & Pages → Create → Import a repository** and use:
 
 - Build command: `npm run build`

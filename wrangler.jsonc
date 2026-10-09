@@ -2,12 +2,19 @@
 // (Cloudflare Pages projects ignore this file and use the dashboard settings.)
 {
   "name": "quotebook",
+  "main": "./worker/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     // serve dist/404.html with a 404 status for unknown URLs
     "not_found_handling": "404-page",
     // /about -> /about/ to match the trailing-slash URLs Astro builds
     "html_handling": "auto-trailing-slash"
+  },
+  "triggers": {
+    // rebuild every 6 hours (UTC) to pick up changes in Airtable; the deploy
+    // hook URL is a secret: npx wrangler secret put DEPLOY_HOOK_URL
+    "crons": ["0 */6 * * *"]
   }
 }
