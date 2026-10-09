@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import getPosts from '../lib/getPosts';
 import { SITE_NAME, SITE_DESCRIPTION } from '../lib/seo';
 import { normalize } from '../lib/search';
+import QuoteCard from '../components/QuoteCard.astro';
 
 const posts = await getPosts();
 
@@ -62,14 +63,7 @@ const jsonLd = {
 
   <section aria-label="Quotes" class="text-xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {posts.map(post => (
-      <a href={`/quote/${post.slug}/`} data-search={normalize(`${post.fields.quote} ${post.fields.author ?? ''}`)} class="block bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-blue-500 hover:border-blue-500 transition hover:text-white p-6 duration-500 rounded-lg">
-        <figure class="quote flex flex-col h-full">
-          <blockquote class="flex-1">&ldquo;{post.fields.quote}&rdquo;</blockquote>
-          <figcaption class="mt-4 text-base text-right">
-            &mdash; {post.fields.author} <cite></cite>
-          </figcaption>
-        </figure>
-      </a>
+      <QuoteCard post={post} data-search={normalize(`${post.fields.quote} ${post.fields.author ?? ''}`)} />
     ))}
   </section>
 </Layout>

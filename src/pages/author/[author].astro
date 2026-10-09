@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import getPosts from '../../lib/getPosts';
+import QuoteCard from '../../components/QuoteCard.astro';
 import { SITE_NAME, truncate } from '../../lib/seo';
 
 export async function getStaticPaths() {
@@ -44,13 +45,7 @@ const jsonLd = {
       <h1 class="block text-6xl md:text-8xl font-display mb-8">{name}</h1>
     </div>
   </header>
-  <section aria-label="Quotes" class="text-xl">
-    {quotes.map(post => (
-      <a href={`/quote/${post.slug}/`} class="block hover:bg-blue-500 transition hover:text-white p-4 duration-500 rounded">
-        <figure class="quote mb-8">
-          <blockquote>&ldquo;{post.fields.quote}&rdquo;</blockquote>
-        </figure>
-      </a>
-    ))}
+  <section aria-label="Quotes" class="text-xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {quotes.map(post => <QuoteCard post={post} />)}
   </section>
 </Layout>

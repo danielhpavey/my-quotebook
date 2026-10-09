@@ -1,0 +1,14 @@
+---
+// a quote shown as a card linking to its own page; extra attributes
+// (e.g. data-search on the homepage) are passed through to the link
+const { post, ...attrs } = Astro.props;
+---
+
+<a href={`/quote/${post.slug}/`} {...attrs} class="block bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-blue-500 hover:border-blue-500 transition hover:text-white p-6 duration-500 rounded-lg">
+  <figure class="quote flex flex-col h-full">
+    <blockquote class="flex-1">&ldquo;{post.fields.quote}&rdquo;</blockquote>
+    <figcaption class="mt-4 text-base text-right">
+      &mdash; {post.fields.author} <cite></cite>
+    </figcaption>
+  </figure>
+</a>
