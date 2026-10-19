@@ -13,8 +13,8 @@
     "html_handling": "auto-trailing-slash"
   },
   "triggers": {
-    // rebuild every 6 hours (UTC) to pick up changes in Airtable; the deploy
+    // rebuild every 12 hours (UTC) to pick up changes in Airtable; the deploy
     // hook URL is a secret: npx wrangler secret put DEPLOY_HOOK_URL
-    "crons": ["0 */6 * * *"]
+    "crons": ["0 */12 * * *"]
   }
 }

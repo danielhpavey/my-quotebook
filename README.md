@@ -30,7 +30,7 @@ new or edited quotes appear after the next deploy.
 ### Workers (recommended for new projects)
 
 `wrangler.jsonc` serves `./dist` as static assets. A small Worker
-(`worker/index.js`) also calls a deploy hook every 6 hours so new quotes in
+(`worker/index.js`) also calls a deploy hook every 12 hours so new quotes in
 Airtable are picked up automatically. Set the hook URL as a secret (not in the
 repo):
 
