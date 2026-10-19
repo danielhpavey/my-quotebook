@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
+import sharp from 'sharp';
 import { SITE_NAME, SITE_DESCRIPTION, truncate } from './seo';
 
 export const OG_WIDTH = 1200;
@@ -32,6 +33,67 @@ const SUPPORTED = /^[\u0000-\u00ff\u0152\u0153\u2000-\u206f\u20ac\u2122]*$/;
 export const canRenderQuote = ({ quote = '', author = '' }) =>
   SUPPORTED.test(quote) && SUPPORTED.test(author);
 
+// Satori can't apply SVG filters, so the paper texture is drawn by resvg
+// (scattered fibres over a soft grain on off-white) and passed to Satori as
+// a background image; rendered once per build
+
+// seeded so every build draws the same fibres
+const random = (seed => () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32)(42);
+
+// short, thin, slightly curved strokes at random angles; mostly darker
+// strands with a few light ones
+const fibres = Array.from({ length: 1400 }, () => {
+  const x = random() * OG_WIDTH;
+  const y = random() * OG_HEIGHT;
+  const angle = random() * Math.PI;
+  const length = 12 + random() ** 2 * 60;
+  const dx = Math.cos(angle) * length;
+  const dy = Math.sin(angle) * length;
+  const bend = (random() - 0.5) * length * 0.5;
+  const cx = x + dx / 2 - Math.sin(angle) * bend;
+  const cy = y + dy / 2 + Math.cos(angle) * bend;
+  const colour = random() < 0.75 ? '#8c8270' : '#ffffff';
+  const width = 0.4 + random() * 0.8;
+  const opacity = 0.05 + random() * 0.15;
+  const n = v => v.toFixed(1);
+  return `<path d="M${n(x)} ${n(y)}Q${n(cx)} ${n(cy)} ${n(x + dx)} ${n(y + dy)}" stroke="${colour}" stroke-width="${width.toFixed(2)}" stroke-opacity="${opacity.toFixed(2)}"/>`;
+}).join('');
+
+const PAPER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_WIDTH}" height="${OG_HEIGHT}">
+  <defs>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="7"/>
+      <feDiffuseLighting lighting-color="#fff" surfaceScale="1.2">
+        <feDistantLight azimuth="45" elevation="60"/>
+      </feDiffuseLighting>
+      <!-- lift the shading so flat areas stay near white -->
+      <feComponentTransfer>
+        <feFuncR type="linear" slope="1.2"/>
+        <feFuncG type="linear" slope="1.2"/>
+        <feFuncB type="linear" slope="1.2"/>
+      </feComponentTransfer>
+    </filter>
+    <filter id="mottle" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="3" seed="3"/>
+      <feColorMatrix values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.3  0 0 0 0.7 -0.2"/>
+    </filter>
+    <radialGradient id="vignette" r="75%">
+      <stop offset="60%" stop-color="#8a6d3b" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#8a6d3b" stop-opacity="0.08"/>
+    </radialGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="#fdfcf8"/>
+  <rect width="100%" height="100%" filter="url(#mottle)" opacity="0.12"/>
+  <rect width="100%" height="100%" filter="url(#grain)" opacity="0.25" style="mix-blend-mode:multiply"/>
+  <g fill="none" stroke-linecap="round">${fibres}</g>
+  <rect width="100%" height="100%" fill="url(#vignette)"/>
+</svg>`;
+let paper;
+const paperBackground = () => {
+  paper ??= `url(data:image/png;base64,${new Resvg(PAPER_SVG).render().asPng().toString('base64')})`;
+  return paper;
+};
+
 // a tiny stand-in for JSX so Satori can be used from plain JS
 const h = (type, style, ...children) => ({
   type,
@@ -50,7 +112,14 @@ const quoteFontSize = length => {
 // Satori adds padding and borders on top of a set width/height, so the root
 // fills the image and the padding sits on a child that flex-stretches into it
 const card = ({ body, footer }) =>
-  h('div', { width: '100%', height: '100%', flexDirection: 'column', backgroundColor: '#ffffff', color: TEXT },
+  h('div', {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    backgroundImage: paperBackground(),
+    backgroundSize: `${OG_WIDTH}px ${OG_HEIGHT}px`,
+    color: TEXT,
+  },
     h('div', { height: 16, backgroundColor: ACCENT }),
     h('div', { flexGrow: 1, flexDirection: 'column', padding: '56px 80px' },
       h('div', { flexGrow: 1, flexDirection: 'column', justifyContent: 'center' }, body),
@@ -58,9 +127,12 @@ const card = ({ body, footer }) =>
     ),
   );
 
+// JPEG rather than PNG: the paper texture is noise, which PNG can't compress
+// (~650 KB vs ~100 KB), and WhatsApp drops previews for large images
 const render = async element => {
   const svg = await satori(element, { width: OG_WIDTH, height: OG_HEIGHT, fonts: await fonts });
-  return new Resvg(svg, { fitTo: { mode: 'width', value: OG_WIDTH } }).render().asPng();
+  const png = new Resvg(svg, { fitTo: { mode: 'width', value: OG_WIDTH } }).render().asPng();
+  return sharp(png).jpeg({ quality: 85, mozjpeg: true }).toBuffer();
 };
 
 export function quoteImage({ quote, author }) {
@@ -89,5 +161,5 @@ export function siteImage() {
   }));
 }
 
-export const pngResponse = png =>
-  new Response(png, { headers: { 'Content-Type': 'image/png' } });
+export const jpegResponse = jpeg =>
+  new Response(jpeg, { headers: { 'Content-Type': 'image/jpeg' } });

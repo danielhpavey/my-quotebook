@@ -13,5 +13,5 @@
 # share images change only when a quote changes; let browsers and crawlers cache them for a day
 /og/*
   Cache-Control: public, max-age=86400
-/og-image.png
+/og-image.jpg
   Cache-Control: public, max-age=86400

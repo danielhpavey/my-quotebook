@@ -1,5 +1,5 @@
 import getPosts from '../../lib/getPosts';
-import { quoteImage, canRenderQuote, pngResponse } from '../../lib/ogImage';
+import { quoteImage, canRenderQuote, jpegResponse } from '../../lib/ogImage';
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -10,5 +10,5 @@ export async function getStaticPaths() {
 }
 
 export async function GET({ props }) {
-  return pngResponse(await quoteImage(props));
+  return jpegResponse(await quoteImage(props));
 }
