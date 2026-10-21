@@ -2,6 +2,8 @@
 import '@fontsource/lora/600.css';
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import Icon from '../components/Icon.astro';
+import { faBars, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { SITE_NAME, SITE_DESCRIPTION } from '../lib/seo';
 import { OG_WIDTH, OG_HEIGHT } from '../lib/ogImage';
 
@@ -23,6 +25,10 @@ const navLinks = [
 ];
 const path = Astro.url.pathname;
 const isCurrent = href => (href === '/' ? path === '/' : path.startsWith(href));
+const linkClass = href => [
+  'block rounded-full px-4 py-2 transition duration-300',
+  isCurrent(href) ? 'bg-blue-500 text-white' : 'text-gray-800 hover:bg-blue-50 hover:text-blue-600',
+];
 
 // social sites need an absolute image URL, so this needs `site` too
 const imageUrl = Astro.site ? new URL(image, Astro.site).href : undefined;
@@ -74,26 +80,35 @@ const structuredData = jsonLd && JSON.stringify(jsonLd).replace(/</g, '\\u003c')
           <a href="/" aria-label={`${SITE_NAME} home`} class="rounded-md hover:opacity-80 transition">
             <Logo />
           </a>
-          <ul class="flex items-center gap-2 text-lg font-medium">
-            {navLinks.map(({ href, label }) => {
-              const current = isCurrent(href);
-              return (
-                <li>
-                  <a
-                    href={href}
-                    aria-current={current ? 'page' : undefined}
-                    class:list={[
-                      'block rounded-full px-4 py-2 transition duration-300',
-                      current
-                        ? 'bg-blue-500 text-white'
-                        : 'text-gray-800 hover:bg-blue-50 hover:text-blue-600',
-                    ]}
-                  >{label}</a>
-                </li>
-              );
-            })}
+          <ul class="hidden sm:flex items-center gap-2 text-lg font-medium">
+            {navLinks.map(({ href, label }) => (
+              <li>
+                <a href={href} aria-current={isCurrent(href) ? 'page' : undefined} class:list={linkClass(href)}>{label}</a>
+              </li>
+            ))}
           </ul>
+          <!-- small screens: the links move into a panel opened by this button -->
+          <button
+            type="button"
+            class="sm:hidden rounded-full p-3 text-gray-800 hover:bg-blue-50 hover:text-blue-600 transition"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            data-menu-button
+          >
+            <span class="sr-only">Menu</span>
+            <span data-icon="open"><Icon icon={faBars} class="w-6 h-6" /></span>
+            <span data-icon="close" hidden><Icon icon={faXmark} class="w-6 h-6" /></span>
+          </button>
         </nav>
+        <div id="mobile-menu" class="sm:hidden border-t border-gray-200 px-8 py-4" hidden data-menu>
+          <ul class="flex flex-col gap-1 text-lg font-medium">
+            {navLinks.map(({ href, label }) => (
+              <li>
+                <a href={href} aria-current={isCurrent(href) ? 'page' : undefined} class:list={linkClass(href)}>{label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </header>
       <div class="flex flex-col flex-1 p-4">
         <main class="container mx-auto flex-1 p-4 max-w-screen-xl">
@@ -104,5 +119,31 @@ const structuredData = jsonLd && JSON.stringify(jsonLd).replace(/</g, '\\u003c')
         </footer>
       </div>
     </div>
+
+    <script>
+      const button = document.querySelector<HTMLButtonElement>('[data-menu-button]')!;
+      const menu = document.querySelector<HTMLElement>('[data-menu]')!;
+      const openIcon = button.querySelector<HTMLElement>('[data-icon="open"]')!;
+      const closeIcon = button.querySelector<HTMLElement>('[data-icon="close"]')!;
+
+      const setOpen = (open: boolean) => {
+        button.setAttribute('aria-expanded', String(open));
+        menu.hidden = !open;
+        openIcon.hidden = open;
+        closeIcon.hidden = !open;
+      };
+
+      button.addEventListener('click', () => setOpen(menu.hidden));
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !menu.hidden) {
+          setOpen(false);
+          button.focus();
+        }
+      });
+      // close when tapping anywhere outside the header
+      document.addEventListener('click', event => {
+        if (!menu.hidden && !(event.target as Element).closest('header')) setOpen(false);
+      });
+    </script>
   </body>
 </html>
