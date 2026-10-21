@@ -38,6 +38,10 @@ const minifyRecord = record => {
   return {
     id: record.id,
     authorSlug: (record.fields.author && slugify(record.fields.author)) || null,
+    // when the quote was added: the "date" field keeps the original dates of
+    // quotes imported from the old notebook, so it's preferred over Airtable's
+    // own creation time, which is the import date for those
+    added: record.fields.date ?? record._rawJson.createdTime,
     fields: record.fields,
   };
 };
