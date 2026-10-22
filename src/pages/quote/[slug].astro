@@ -61,7 +61,12 @@ const jsonLd = {
   </div>
   {pageUrl && (
     <div class="mx-auto max-w-lg">
-      <ShareLinks url={pageUrl} quote={text} author={author} />
+      <ShareLinks
+        url={pageUrl}
+        quote={text}
+        author={author}
+        image={hasImage ? `/og/${quote.slug}.jpg` : undefined}
+      />
     </div>
   )}
 </Layout>

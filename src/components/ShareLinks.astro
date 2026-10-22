@@ -6,12 +6,13 @@ import {
   faBluesky,
   faThreads,
   faWhatsapp,
+  faInstagram,
 } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope, faLink, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Icon from './Icon.astro';
 import { SITE_NAME, truncate } from '../lib/seo';
 
-const { url, quote, author } = Astro.props;
+const { url, quote, author, image } = Astro.props;
 
 // keep the text short enough for X's 280 character limit once the link is added
 const text = `“${truncate(quote, 200)}”${author ? ` – ${author}` : ''}`;
@@ -35,11 +36,28 @@ const buttonClass = 'flex items-center justify-center w-11 h-11 rounded-full bor
   <h2 id="share-heading" class="text-base font-semibold text-gray-500 mb-4 text-center">Share this quote</h2>
   <ul class="flex flex-wrap justify-center gap-3">
     {networks.map(({ name, icon, href }) => (
-      <li>
-        <a href={href} target="_blank" rel="noopener noreferrer" class={buttonClass} aria-label={`Share on ${name}`} title={`Share on ${name}`}>
-          <Icon icon={icon} />
-        </a>
-      </li>
+      <>
+        <li>
+          <a href={href} target="_blank" rel="noopener noreferrer" class={buttonClass} aria-label={`Share on ${name}`} title={`Share on ${name}`}>
+            <Icon icon={icon} />
+          </a>
+        </li>
+        {name === 'Threads' && image && (
+          <li>
+            <button
+              type="button"
+              class={buttonClass}
+              data-share-instagram={image}
+              data-share-text={withUrl}
+              aria-label="Share on Instagram"
+              title="Share on Instagram"
+            >
+              <span data-icon="instagram"><Icon icon={faInstagram} /></span>
+              <span data-icon="check" hidden><Icon icon={faCheck} /></span>
+            </button>
+          </li>
+        )}
+      </>
     ))}
     <li>
       <a href={email} class={buttonClass} aria-label="Share by email" title="Share by email">
@@ -78,6 +96,74 @@ const buttonClass = 'flex items-center justify-center w-11 h-11 rounded-full bor
         checkIcon.hidden = true;
         if (status) status.textContent = '';
       }, 2000);
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-share-instagram]').forEach(button => {
+    const instagramIcon = button.querySelector<HTMLElement>('[data-icon="instagram"]')!;
+    const checkIcon = button.querySelector<HTMLElement>('[data-icon="check"]')!;
+    const status = button.closest('aside')?.querySelector('[data-copy-status]');
+    const imageUrl = button.dataset.shareInstagram!;
+    const shareText = button.dataset.shareText || '';
+
+    const setFeedback = (msg: string) => {
+      instagramIcon.hidden = true;
+      checkIcon.hidden = false;
+      if (status) status.textContent = msg;
+      setTimeout(() => {
+        instagramIcon.hidden = false;
+        checkIcon.hidden = true;
+        if (status) status.textContent = '';
+      }, 2500);
+    };
+
+    const triggerDownloadAndInstagram = () => {
+      const filename = imageUrl.split('/').pop() || 'quote.jpg';
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+      setFeedback('Image downloaded! Open Instagram to share.');
+    };
+
+    button.addEventListener('click', async () => {
+      const isMobile =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      const canShareFile =
+        isMobile &&
+        typeof navigator !== 'undefined' &&
+        typeof navigator.share === 'function' &&
+        typeof navigator.canShare === 'function';
+
+      if (canShareFile) {
+        try {
+          const res = await fetch(imageUrl);
+          const blob = await res.blob();
+          const filename = imageUrl.split('/').pop() || 'quote.jpg';
+          const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: document.title,
+              text: shareText,
+            });
+            setFeedback('Shared');
+            return;
+          }
+        } catch (err: any) {
+          if (err?.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+
+      triggerDownloadAndInstagram();
     });
   });
 </script>
