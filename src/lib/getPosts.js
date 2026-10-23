@@ -42,9 +42,19 @@ const minifyRecord = record => {
     ? rawTags.split(',').map(t => t.trim()).filter(Boolean)
     : [];
 
+  const rawBio =
+    record.fields['Biography (from Author Record)'] ??
+    record.fields['Biography'] ??
+    record.fields['biography'] ??
+    record.fields['author biography'] ??
+    record.fields['authors biography'] ??
+    record.fields['Author Biography'];
+  const authorBio = Array.isArray(rawBio) ? rawBio[0] : typeof rawBio === 'string' ? rawBio : null;
+
   return {
     id: record.id,
     authorSlug: (record.fields.author && slugify(record.fields.author)) || null,
+    authorBio: authorBio?.trim() || null,
     tags: tags.map(tag => ({
       name: tag,
       slug: slugify(tag),
