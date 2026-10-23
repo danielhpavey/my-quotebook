@@ -20,7 +20,7 @@ const {
 const canonical = Astro.site && !noindex ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/latest/', label: 'Latest' },
+  { href: '/quotes/', label: 'All quotes' },
   { href: '/about/', label: 'About' },
 ];
 const path = Astro.url.pathname;
