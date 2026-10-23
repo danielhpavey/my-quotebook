@@ -1,0 +1,61 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import getPosts from '../../lib/getPosts';
+import QuoteCard from '../../components/QuoteCard.astro';
+import { SITE_NAME, truncate } from '../../lib/seo';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const tags = new Map();
+  posts.forEach(post => {
+    if (!post.tags || !post.tags.length) return;
+    post.tags.forEach(tag => {
+      if (!tags.has(tag.slug)) {
+        tags.set(tag.slug, { name: tag.name, slug: tag.slug, quotes: [] });
+      }
+      tags.get(tag.slug).quotes.push(post);
+    });
+  });
+  return [...tags].map(([slug, tagData]) => ({
+    params: { tag: slug },
+    props: tagData,
+  }));
+}
+
+const { name, quotes } = Astro.props;
+
+const count = quotes.length === 1 ? '1 quote' : `${quotes.length} quotes`;
+const description = truncate(`${count} tagged with “${name}”, including “${quotes[0]?.fields?.quote ?? ''}”`);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Quotes tagged "${name}" | ${SITE_NAME}`,
+  description,
+  ...(Astro.site && { url: new URL(Astro.url.pathname, Astro.site).href }),
+  hasPart: quotes.map(post => ({
+    '@type': 'Quotation',
+    text: post.fields.quote,
+    ...(post.fields.author && { creator: { '@type': 'Person', name: post.fields.author } }),
+    ...(Astro.site && { url: new URL(`/quote/${post.slug}/`, Astro.site).href }),
+  })),
+};
+---
+
+<Layout title={`Quotes tagged "${name}" | ${SITE_NAME}`} description={description} jsonLd={jsonLd}>
+  <header class="h-42">
+    <div class="w-full">
+      <h1 class="block text-6xl md:text-8xl font-display mb-8">{name}</h1>
+    </div>
+  </header>
+  <section aria-label={`Quotes tagged ${name}`} class="text-xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {quotes.map(post => <QuoteCard post={post} />)}
+  </section>
+
+  <p class="mt-12 text-lg">
+    <a href="/" class="text-blue-500 hover:underline">
+      &larr; Browse all quotes
+    </a>
+  </p>
+</Layout>
+

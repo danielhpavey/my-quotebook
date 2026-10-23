@@ -35,9 +35,20 @@ const baseSlug = fields =>
 
 // gets the data we want and puts it into variables
 const minifyRecord = record => {
+  const rawTags = record.fields.tags ?? record.fields.Tags;
+  const tags = Array.isArray(rawTags)
+    ? rawTags.filter(Boolean)
+    : typeof rawTags === 'string'
+    ? rawTags.split(',').map(t => t.trim()).filter(Boolean)
+    : [];
+
   return {
     id: record.id,
     authorSlug: (record.fields.author && slugify(record.fields.author)) || null,
+    tags: tags.map(tag => ({
+      name: tag,
+      slug: slugify(tag),
+    })),
     // when the quote was added: the "date" field keeps the original dates of
     // quotes imported from the old notebook, so it's preferred over Airtable's
     // own creation time, which is the import date for those
