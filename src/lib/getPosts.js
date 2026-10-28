@@ -82,7 +82,19 @@ const addSlugs = posts => {
   return posts;
 };
 
-export default async function getPosts() {
+const fetchPosts = async () => {
   const records = await table.select({}).all();
   return addSlugs(records.map(minifyRecord));
+};
+
+// every route calls this, so a build fetches the table once and shares it;
+// the dev server skips the cache so Airtable edits show up on reload
+let cached;
+export default function getPosts() {
+  if (import.meta.env.DEV) return fetchPosts();
+  cached ??= fetchPosts().catch(err => {
+    cached = undefined;
+    throw err;
+  });
+  return cached;
 }
